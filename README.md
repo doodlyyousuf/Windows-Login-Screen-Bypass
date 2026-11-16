@@ -1,118 +1,164 @@
 # Windows Login Screen Bypass & Application Execution
 
-> ⚠️ **Educational Purpose Only**: This repository documents a known Windows security vulnerability for educational and defensive purposes. The goal is to highlight potential weaknesses to help improve operating system security. Use responsibly and legally.
+> ⚠️ **Educational Purpose Only**  
+> This repository documents a known Windows security vulnerability for educational and defensive purposes. The goal is to highlight potential weaknesses so operating system security can be improved. Use responsibly and legally.
 
-🟢 **Status:** Tested and confirmed working as of today, **August 24, 2026**.
-
-## 📖 Overview
-
-This repository demonstrates an advanced technique to bypass the Windows login screen and execute applications directly without authenticating. It covers methods to access a restricted command prompt, elevate it to a full-fledged terminal, and run standard user applications (including multi-process apps) seamlessly on the lock screen.
-
-## ⚙️ How It Works
-
-The bypass relies on replacing a legitimate System32 executable with the Command Prompt (`cmd.exe`). When triggered from the lock screen, Windows executes the command prompt with elevated privileges, allowing you to spawn a secondary terminal and launch applications.
+🟢 **Status:** Tested and confirmed working as of **August 24, 2026**.
 
 ---
 
-## 🕵️ Stealth Method: The `narrator.exe` Alternative
+## Overview
 
-While the classic method involves replacing `sethc.exe` (Sticky Keys) and pressing the **Shift key 5 times**, this action is heavily monitored by modern Endpoint Detection and Response (EDR) systems and Windows Defender.
+This repository demonstrates a technique to bypass the Windows login screen and execute applications without authenticating. It covers:
 
-> 💡 **Pro Tip**: Instead of `sethc.exe`, rename `narrator.exe` to `narrator.exe.bak` and copy `cmd.exe` as `narrator.exe`. 
-> 
-> **Why?** It works exactly the same but avoids the 5-shift key press detection. You simply trigger it by clicking the **Accessibility/Ease of Access** menu on the login screen and selecting **Narrator**. This is significantly stealthier.
+- Accessing a restricted command prompt from the lock screen
+- Elevating that prompt to a full terminal
+- Launching standard user applications (including multi-process apps) while the machine remains locked
 
 ---
 
-## 🚀 Step-by-Step Execution Guide
+## How It Works
 
-### Step 1: Choose Your Entry Method (Get to System32)
+The bypass works by replacing a legitimate System32 executable with `cmd.exe`. When the replaced binary is triggered from the login screen, Windows launches an elevated Command Prompt. From there you can spawn additional processes and run applications.
 
-You need to access the `C:\Windows\System32` folder to replace the executable. You can do this via a Bootable USB OR the built-in Windows Recovery Environment.
+---
 
-#### Method A: Using a Bootable USB (Classic)
-1. Create a bootable USB drive using Windows Installation Media or a Linux distribution.
-2. Boot the target machine from this USB.
-3. Open the file manager and navigate to the Windows partition: `C:\Windows\System32`.
+## Stealth Method: Using `narrator.exe` (Recommended)
 
-#### Method B: Using Windows Recovery Environment (No USB Required)
-*Note: This method requires access to the login screen and may require the local Administrator password or BitLocker recovery key to open the Command Prompt in WinRE.*
-1. On the Windows login screen, hold down the **Shift** key and click the **Power icon -> Restart**.
-2. The system will boot into the blue Windows Recovery Environment (WinRE).
-3. Navigate to **Troubleshoot** > **Advanced options** > **Command Prompt**.
-4. *(If prompted, select the Administrator account and enter the password).*
-5. Once the Command Prompt opens, navigate to the System32 folder. 
-   > ⚠️ **Important Note for WinRE:** The Windows drive letter often changes in Recovery Mode (e.g., it might be `D:` or `E:` instead of `C:`). Type `dir C:\Windows` or `dir D:\Windows` to find the correct drive letter.
-6. Navigate to that drive's System32 folder (e.g., `D:\Windows\System32`).
+The classic method replaces `sethc.exe` (Sticky Keys) and is triggered by pressing **Shift** five times. This behavior is heavily monitored by modern EDR solutions and Windows Defender.
 
-### Step 2: Modify System Files
-Whichever method you used in Step 1, once you are inside the `System32` folder:
-1. *(Recommended Stealth Method)*: 
-   - Rename `narrator.exe` to `narrator.exe.bak`.
-   - Copy `cmd.exe` and paste it in the same folder, renaming the copy to `narrator.exe`.
-2. *(Alternative Classic Method)*: Replace `sethc.exe` with `cmd.exe`.
-3. Close the file manager or command prompt.
-   - *If using Method B (WinRE)*: Select **Continue** to boot normally back into Windows.
+**Better approach:**
+
+1. Rename `narrator.exe` → `narrator.exe.bak`
+2. Copy `cmd.exe` and rename the copy to `narrator.exe`
+
+**Why this is better:**  
+You trigger it by opening the Accessibility / Ease of Access menu on the login screen and selecting **Narrator**. No repeated Shift key presses are required, making it significantly stealthier.
+
+---
+
+## Step-by-Step Guide
+
+### Step 1: Gain Access to System32
+
+You need write access to `C:\Windows\System32`. Two common methods:
+
+#### Method A — Bootable USB
+
+1. Create a bootable USB (Windows Installation Media or a Linux distro).
+2. Boot the target machine from the USB.
+3. Navigate to the Windows partition → `Windows\System32`.
+
+#### Method B — Windows Recovery Environment (No USB)
+
+> **Note:** This method may require the local Administrator password or BitLocker recovery key.
+
+1. On the login screen, hold **Shift** and click **Power → Restart**.
+2. The system boots into the Windows Recovery Environment (WinRE).
+3. Go to **Troubleshoot → Advanced options → Command Prompt**.
+4. If prompted, select the Administrator account and enter the password.
+5. Determine the correct drive letter (it is often not `C:` in recovery):
+   ```cmd
+   dir C:\Windows
+   dir D:\Windows
+   dir E:\Windows
+   ```
+6. Navigate to the correct System32 folder, for example:
+   ```cmd
+   cd /d D:\Windows\System32
+   ```
+
+---
+
+### Step 2: Replace the Target Executable
+
+Once inside System32:
+
+**Recommended (Narrator method):**
+```cmd
+ren narrator.exe narrator.exe.bak
+copy cmd.exe narrator.exe
+```
+
+**Classic (Sticky Keys method):**
+```cmd
+ren sethc.exe sethc.exe.bak
+copy cmd.exe sethc.exe
+```
+
+Then exit the recovery environment or reboot normally.
+
+---
 
 ### Step 3: Trigger the Bypass
-1. Wait for the computer to reach the normal login screen.
-2. Trigger the modified executable:
-   - **If using Narrator method**: Click the Accessibility icon (or press `Win + Ctrl + Enter`) and select **Narrator**.
-   - **If using Sticky Keys method**: Press the **Shift key 5 times**.
-3. A Command Prompt window will open.
+
+1. Boot to the normal Windows login screen.
+2. Trigger the modified binary:
+   - **Narrator method:** Click the Accessibility icon (or press `Win + Ctrl + Enter`) → select **Narrator**.
+   - **Sticky Keys method:** Press the **Shift** key five times.
+3. A Command Prompt window appears.
+
+---
 
 ### Step 4: Elevate the Command Prompt
-The initial prompt may have minor restrictions. To bypass them and get a full-fledged terminal:
+
+The initial prompt can have restrictions. Launch a new instance:
+
 ```cmd
 cmd
 ```
-*Press Enter. You now have an unrestricted command prompt.*
 
-### Step 5: Execute Applications
-You can now launch applications directly. For example, to run Google Chrome:
+You now have a fully functional elevated Command Prompt.
+
+---
+
+### Step 5: Launch Applications
+
+Example — start Google Chrome:
 
 ```cmd
 cd "C:\Program Files\Google\Chrome\Application"
 chrome.exe
 ```
-💥 **Boom!** Chrome is now running directly on the lock screen.
+
+The application runs on the lock screen. Session data (tabs, cache, etc.) is preserved and will be available after a normal login.
 
 ---
 
-## ✨ Key Features & Capabilities
+## Key Features
 
-- **Multiple Entry Vectors**: Works via external Bootable USB OR internally via Windows Recovery Environment (Shift+Restart).
-- **No Login Required**: Access and run user applications without authenticating.
-- **Multi-Process Support**: Fully supports modern, multi-process applications (no legacy single-process limitations).
-- **Full System Tool Access**: The elevated CMD allows you to run advanced utilities like Computer Management (`compmgmt.msc`), Registry Editor (`regedit`), and more.
-- **Data Persistence**: Applications run in the context of the user profile. If you open Chrome, browse, and later log into the account normally, all your tabs, cache, and session data will be saved and intact—no worries!
-- **Stealth Execution**: The `narrator.exe` method bypasses common heuristic triggers associated with the Sticky Keys exploit.
-
----
-
-## 📌 Additional Notes
-
-- Always verify the exact installation path of the application you wish to run. The Chrome path provided is the default, but it may vary based on user installation choices.
-- This technique exploits local physical access or recovery access. Ensuring your device is protected with **BitLocker** or similar full-disk encryption is the primary mitigation against this attack.
+- Works via external bootable media **or** Windows Recovery Environment
+- No authentication required
+- Supports modern multi-process applications
+- Full access to system tools (`compmgmt.msc`, `regedit`, etc.)
+- Application data and session state persist after login
+- Narrator method avoids common Sticky Keys detection heuristics
 
 ---
 
-## 🤝 Contribution
+## Additional Notes
 
-If you have ideas for improvements, alternative execution methods, or better defensive mitigations, please feel free to reach out or open a discussion. Collaboration is welcome. 
-
-If you repost this technique or reference it in your work, please credit the original author.
-
----
-
-## ⚖️ Disclaimer
-
-This technique is shared strictly for **educational and defensive purposes**. Understanding how attackers bypass security controls is essential for building better defenses. 
-
-**Use at your own risk.** Bypassing security measures on systems you do not own or have explicit permission to test is illegal and unethical. Always act responsibly and within the bounds of the law.
+- Always confirm the exact path of the application you want to launch — installation locations can vary.
+- The primary mitigation against this class of attack is full-disk encryption (BitLocker or equivalent). Physical or recovery access is required for the technique to work.
 
 ---
 
-## 📜 License
+## Contribution
+
+Ideas for improvements, alternative methods, or defensive mitigations are welcome. Please open a discussion or reach out.
+
+If you reference or republish this technique, please credit the original author.
+
+---
+
+## Disclaimer
+
+This material is provided strictly for **educational and defensive** purposes. Understanding how security controls can be bypassed is necessary to improve them.
+
+**Use at your own risk.** Performing these actions on systems you do not own or do not have explicit authorization to test is illegal. Always stay within the law.
+
+---
+
+## License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
